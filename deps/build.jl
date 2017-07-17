@@ -61,14 +61,21 @@ end
 
 base = dirname(@__FILE__)
 download_dir = joinpath(base, "downloads")
-bin_dir = joinpath(base, "usr/bin")
+bin_dir = joinpath(base, "usr", "bin")
+
+# @static if is_windows()
+#     bin_dir = joinpath(base, "usr\\bin")
+# end
 
 if !isdir(download_dir)
     mkdir(download_dir)
 end
 
 if !isdir(bin_dir)
-    run(`mkdir -p $bin_dir`)
+    if !isdir(joinpath(base, "usr"))
+        mkdir(joinpath(base, "usr"))
+    end
+    mkdir(bin_dir)
 end
 
 
@@ -104,7 +111,14 @@ end
     mv("libtensorflow.so", "usr/bin/libtensorflow.so", remove_destination=true)
 end
 
-
+@static if is_windows()
+    download_and_unpack("http://ci.tensorflow.org/job/release-libtensorflow-windows/lastSuccessfulBuild/artifact/lib_package/libtensorflow-cpu-windows-x86_64.zip")
+    # Currently leave it in the deps/download directory
+    mv("tensorflow.dll", "usr\\bin\\libtensorflow.dll", remove_destination=true)
+    for f in ["c_api.h", "LICENSE"]
+        rm(f)
+    end
+end
 
 # When TensorFlow issue #8669 is closed and a new version is released, use the official release binaries
 # of the TensorFlow C library.
